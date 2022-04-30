@@ -69,121 +69,133 @@ export default function IndexPage() {
   }, [gameRecords]);
 
   return (
-    <div>
+    <div style={{ display: 'flex' }}>
       {gameRecords.length === 0 && (
         <Upload {...uploadProps}>
           <Button icon={<UploadOutlined />}>Click to Upload</Button>
         </Upload>
       )}
-      <div>
-        胜率表：
-        <PokerMatrics
-          cell={cardValues.map((rowCard, rowIndex) =>
-            cardValues.map((columnCard, columnIndex) => {
-              const totalRecords =
-                specifyHandsGameRecords[rowIndex][columnIndex];
-              const winRecords = totalRecords.filter((record) => record.win);
-              const passRecords = totalRecords.filter((record) => record.pass);
-              const loseRecords = totalRecords.filter((record) => record.lose);
+      {gameRecords.length > 0 && (
+        <div>
+          胜率表：
+          <PokerMatrics
+            cell={cardValues.map((rowCard, rowIndex) =>
+              cardValues.map((columnCard, columnIndex) => {
+                const totalRecords =
+                  specifyHandsGameRecords[rowIndex][columnIndex];
+                const winRecords = totalRecords.filter((record) => record.win);
+                const passRecords = totalRecords.filter(
+                  (record) => record.pass,
+                );
+                const loseRecords = totalRecords.filter(
+                  (record) => record.lose,
+                );
 
-              return (
-                <Popover
-                  content={
+                return (
+                  <Popover
+                    content={
+                      <div>
+                        <div>
+                          胜:{winRecords.length} 胜率:
+                          {percentageFormatter.format(
+                            winRecords.length / totalRecords.length,
+                          )}
+                        </div>
+                        <div>
+                          弃:{passRecords.length} 弃率:
+                          {percentageFormatter.format(
+                            passRecords.length / totalRecords.length,
+                          )}
+                        </div>
+                        <div>
+                          负:{loseRecords.length} 负率:
+                          {percentageFormatter.format(
+                            loseRecords.length / totalRecords.length,
+                          )}
+                        </div>
+                      </div>
+                    }
+                    trigger="hover"
+                  >
                     <div>
-                      <div>
-                        胜:{winRecords.length} 胜率:
-                        {percentageFormatter.format(
-                          winRecords.length / totalRecords.length,
-                        )}
-                      </div>
-                      <div>
-                        弃:{passRecords.length} 弃率:
-                        {percentageFormatter.format(
-                          passRecords.length / totalRecords.length,
-                        )}
-                      </div>
-                      <div>
-                        负:{loseRecords.length} 负率:
-                        {percentageFormatter.format(
-                          loseRecords.length / totalRecords.length,
-                        )}
-                      </div>
+                      <WinPassLoseIndicator
+                        winPercentage={
+                          winRecords.length /
+                          specifyHandsGameRecords[rowIndex][columnIndex].length
+                        }
+                        passPercentage={
+                          passRecords.length /
+                          specifyHandsGameRecords[rowIndex][columnIndex].length
+                        }
+                        losePercentage={
+                          loseRecords.length /
+                          specifyHandsGameRecords[rowIndex][columnIndex].length
+                        }
+                      />
                     </div>
-                  }
-                  trigger="hover"
-                >
-                  <div>
-                    <WinPassLoseIndicator
-                      winPercentage={
-                        winRecords.length /
-                        specifyHandsGameRecords[rowIndex][columnIndex].length
-                      }
-                      passPercentage={
-                        passRecords.length /
-                        specifyHandsGameRecords[rowIndex][columnIndex].length
-                      }
-                      losePercentage={
-                        loseRecords.length /
-                        specifyHandsGameRecords[rowIndex][columnIndex].length
-                      }
-                    />
+                  </Popover>
+                );
+              }),
+            )}
+          />
+        </div>
+      )}
+      {gameRecords.length > 0 && (
+        <div>
+          每手盈利表(BB)：
+          <PokerMatrics
+            cell={cardValues.map((rowCard, rowIndex) =>
+              cardValues.map((columnCard, columnIndex) => {
+                const totalRecords =
+                  specifyHandsGameRecords[rowIndex][columnIndex];
+                const profitPerHand =
+                  totalRecords
+                    .map((record) => record.winBigBlinds)
+                    .reduce((pre, record) => pre + record, 0) /
+                  totalRecords.length;
+
+                let fontStyle: {
+                  color: string;
+                  fontWeight?: string;
+                } = {
+                  color: '#bfbfbf',
+                };
+                if (profitPerHand > 0.1 && profitPerHand < 5) {
+                  fontStyle = {
+                    color: '#ff7875',
+                  };
+                } else if (profitPerHand > 5) {
+                  fontStyle = {
+                    color: '#f5222d',
+                    fontWeight: 'bold',
+                  };
+                } else if (profitPerHand < -0.1 && profitPerHand >= -5) {
+                  fontStyle = {
+                    color: '#73d13d',
+                  };
+                } else if (profitPerHand < -5) {
+                  fontStyle = {
+                    color: '#52c41a',
+                    fontWeight: 'bold',
+                  };
+                }
+
+                return (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      ...fontStyle,
+                    }}
+                  >
+                    {numberFormatter.format(profitPerHand)}
                   </div>
-                </Popover>
-              );
-            }),
-          )}
-        />
-      </div>
-      每手盈利表(BB)：
-      <PokerMatrics
-        cell={cardValues.map((rowCard, rowIndex) =>
-          cardValues.map((columnCard, columnIndex) => {
-            const totalRecords = specifyHandsGameRecords[rowIndex][columnIndex];
-            const profitPerHand =
-              totalRecords
-                .map((record) => record.winBigBlinds)
-                .reduce((pre, record) => pre + record, 0) / totalRecords.length;
-
-            let fontStyle: {
-              color: string;
-              fontWeight?: string;
-            } = {
-              color: '#bfbfbf',
-            };
-            if (profitPerHand > 0.1 && profitPerHand < 5) {
-              fontStyle = {
-                color: '#ff7875',
-              };
-            } else if (profitPerHand > 5) {
-              fontStyle = {
-                color: '#f5222d',
-                fontWeight: 'bold',
-              };
-            } else if (profitPerHand < -0.1 && profitPerHand >= -5) {
-              fontStyle = {
-                color: '#73d13d',
-              };
-            } else if (profitPerHand < -5) {
-              fontStyle = {
-                color: '#52c41a',
-                fontWeight: 'bold',
-              };
-            }
-
-            return (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  ...fontStyle,
-                }}
-              >
-                {numberFormatter.format(profitPerHand)}
-              </div>
-            );
-          }),
-        )}
-      />
+                );
+              }),
+            )}
+          />
+        </div>
+      )}
     </div>
   );
 }
