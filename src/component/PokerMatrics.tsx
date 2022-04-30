@@ -31,7 +31,7 @@ export const PokerMatrics: React.FC<{ cell: Array<Array<ReactElement>> }> = ({
                 border: '1px solid black',
               }}
             >
-              <div>
+              <div style={{ position: 'absolute' }}>
                 {rowIndex < columnIndex ? `${rowValue}${columnValue}s` : ''}
                 {rowIndex > columnIndex ? `${columnValue}${rowValue}o` : ''}
                 {rowIndex === columnIndex ? `${rowValue}${rowValue}` : ''}

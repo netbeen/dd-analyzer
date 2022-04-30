@@ -2,13 +2,14 @@ import styles from './index.less';
 import { Upload, message, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
-import { PokerMatrics } from '@/component/PokerMatrics';
+import { cardValues, PokerMatrics } from '@/component/PokerMatrics';
 import { WinPassLoseIndicator } from '@/component/WinPassLoseIndicator';
 
 const heroName = 'YY';
 
 export default function IndexPage() {
   const [rawText, setRawText] = useState<string>('');
+  const [gameRecords, setGameRecords] = useState<any[]>([]);
 
   const props = {
     name: 'file',
@@ -72,6 +73,7 @@ export default function IndexPage() {
           winBigBlinds: 0,
         };
       });
+    setGameRecords(formattedGameRecords);
     console.log('formattedGameRecords', formattedGameRecords);
     console.log(
       'formattedGameRecords',
@@ -120,15 +122,81 @@ export default function IndexPage() {
       <div>
         胜/弃/负：
         <PokerMatrics
-          cell={[
-            [
-              <WinPassLoseIndicator
-                winPercentage={0.5}
-                passPercentage={0.2}
-                losePercentage={0.3}
-              />,
-            ],
-          ]}
+          cell={cardValues.map((rowCard, rowIndex) =>
+            cardValues.map((columnCard, columnIndex) => {
+              if (rowIndex < columnIndex) {
+                // s
+                const records = gameRecords.filter(
+                  (gameRecord) =>
+                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+                    gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
+                    gameRecord.hands[0][1] === gameRecord.hands[1][1],
+                );
+                return (
+                  <WinPassLoseIndicator
+                    winPercentage={
+                      records.filter((record) => record.win).length /
+                      records.length
+                    }
+                    passPercentage={
+                      records.filter((record) => record.pass).length /
+                      records.length
+                    }
+                    losePercentage={
+                      records.filter((record) => record.lost).length /
+                      records.length
+                    }
+                  />
+                );
+              } else if (rowIndex > columnIndex) {
+                const records = gameRecords.filter(
+                  (gameRecord) =>
+                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+                    gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
+                    gameRecord.hands[0][1] !== gameRecord.hands[1][1],
+                );
+                return (
+                  <WinPassLoseIndicator
+                    winPercentage={
+                      records.filter((record) => record.win).length /
+                      records.length
+                    }
+                    passPercentage={
+                      records.filter((record) => record.pass).length /
+                      records.length
+                    }
+                    losePercentage={
+                      records.filter((record) => record.lost).length /
+                      records.length
+                    }
+                  />
+                );
+              } else {
+                // pair
+                const records = gameRecords.filter(
+                  (gameRecord) =>
+                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+                    gameRecord.hands[1].startsWith(cardValues[columnIndex]),
+                );
+                return (
+                  <WinPassLoseIndicator
+                    winPercentage={
+                      records.filter((record) => record.win).length /
+                      records.length
+                    }
+                    passPercentage={
+                      records.filter((record) => record.pass).length /
+                      records.length
+                    }
+                    losePercentage={
+                      records.filter((record) => record.lost).length /
+                      records.length
+                    }
+                  />
+                );
+              }
+            }),
+          )}
         />
       </div>
     </div>
