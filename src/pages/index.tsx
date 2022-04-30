@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { cardValues, PokerMatrics } from '@/component/PokerMatrics';
 import { WinPassLoseIndicator } from '@/component/WinPassLoseIndicator';
 import { convertTextToGameRecord, IGameRecord } from '@/service/gameRecord';
+import { percentageFormatter } from '@/service/utils';
 
 export default function IndexPage() {
   const [rawText, setRawText] = useState<string>('');
@@ -28,50 +29,13 @@ export default function IndexPage() {
     const gameRecords = rawText.split(
       '-----------------------------------------------------\r\n\r\n',
     );
-    console.log('gameRecords', gameRecords[gameRecords.length - 2]);
     const formattedGameRecords = gameRecords
       .slice(0, gameRecords.length - 1)
       .map((textRecord) => {
         return convertTextToGameRecord(textRecord);
       });
+    console.log('gameRecords', gameRecords[gameRecords.length - 2]);
     setGameRecords(formattedGameRecords);
-    console.log(
-      'formattedGameRecords',
-      formattedGameRecords[formattedGameRecords.length - 1],
-    );
-    console.log('有效手数', formattedGameRecords.length);
-    console.log(
-      'Win手数',
-      formattedGameRecords.filter((item) => item.win).length,
-    );
-    console.log(
-      'Pass手数',
-      formattedGameRecords.filter((item) => item.pass).length,
-    );
-    console.log(
-      'Lose手数',
-      formattedGameRecords.filter((item) => item.lose).length,
-    );
-    console.log(
-      'Win率',
-      formattedGameRecords.filter((item) => item.win).length /
-        formattedGameRecords.length,
-    );
-    console.log(
-      'Pass率',
-      formattedGameRecords.filter((item) => item.pass).length /
-        formattedGameRecords.length,
-    );
-    console.log(
-      'Lose率',
-      formattedGameRecords.filter((item) => item.lose).length /
-        formattedGameRecords.length,
-    );
-    console.log(
-      formattedGameRecords.filter(
-        (item) => !item.lose && !item.pass && !item.win,
-      ),
-    );
   }, [rawText]);
 
   return (
@@ -117,7 +81,28 @@ export default function IndexPage() {
 
               return (
                 <Popover
-                  content={`胜:${winRecords.length} 弃:${passRecords.length} 负:${loseRecords.length}`}
+                  content={
+                    <div>
+                      <div>
+                        胜:{winRecords.length} 胜率:
+                        {percentageFormatter.format(
+                          winRecords.length / totalRecords.length,
+                        )}
+                      </div>
+                      <div>
+                        弃:{passRecords.length} 弃率:
+                        {percentageFormatter.format(
+                          passRecords.length / totalRecords.length,
+                        )}
+                      </div>
+                      <div>
+                        负:{loseRecords.length} 负率:
+                        {percentageFormatter.format(
+                          loseRecords.length / totalRecords.length,
+                        )}
+                      </div>
+                    </div>
+                  }
                   trigger="hover"
                 >
                   <div>
