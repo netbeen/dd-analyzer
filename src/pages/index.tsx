@@ -160,7 +160,7 @@ export default function IndexPage() {
                 } = {
                   color: '#bfbfbf',
                 };
-                if (profitPerHand > 0.1 && profitPerHand < 5) {
+                if (profitPerHand > 0.5 && profitPerHand < 5) {
                   fontStyle = {
                     color: '#ff7875',
                   };
@@ -169,13 +169,13 @@ export default function IndexPage() {
                     color: '#f5222d',
                     fontWeight: 'bold',
                   };
-                } else if (profitPerHand < -0.1 && profitPerHand >= -5) {
+                } else if (profitPerHand < -0.5 && profitPerHand >= -5) {
                   fontStyle = {
-                    color: '#73d13d',
+                    color: '#389e0d',
                   };
                 } else if (profitPerHand < -5) {
                   fontStyle = {
-                    color: '#52c41a',
+                    color: '#237804',
                     fontWeight: 'bold',
                   };
                 }
