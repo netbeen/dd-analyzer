@@ -1,11 +1,11 @@
 import styles from './index.less';
 import { Upload, Popover, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cardValues, PokerMatrics } from '@/component/PokerMatrics';
 import { WinPassLoseIndicator } from '@/component/WinPassLoseIndicator';
 import { convertTextToGameRecord, IGameRecord } from '@/service/gameRecord';
-import { percentageFormatter } from '@/service/utils';
+import { numberFormatter, percentageFormatter } from '@/service/utils';
 
 export default function IndexPage() {
   const [rawText, setRawText] = useState<string>('');
@@ -34,9 +34,39 @@ export default function IndexPage() {
       .map((textRecord) => {
         return convertTextToGameRecord(textRecord);
       });
-    console.log('gameRecords', gameRecords[gameRecords.length - 2]);
+    // console.log('gameRecords', gameRecords[gameRecords.length - 27], formattedGameRecords[formattedGameRecords.length - 26]);
     setGameRecords(formattedGameRecords);
   }, [rawText]);
+
+  const specifyHandsGameRecords: IGameRecord[][][] = useMemo(() => {
+    return cardValues.map((rowCard, rowIndex) =>
+      cardValues.map((columnCard, columnIndex) => {
+        let totalRecords: IGameRecord[];
+        if (rowIndex < columnIndex) {
+          totalRecords = gameRecords.filter(
+            (gameRecord) =>
+              gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+              gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
+              gameRecord.hands[0][1] === gameRecord.hands[1][1],
+          );
+        } else if (rowIndex > columnIndex) {
+          totalRecords = gameRecords.filter(
+            (gameRecord) =>
+              gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+              gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
+              gameRecord.hands[0][1] !== gameRecord.hands[1][1],
+          );
+        } else {
+          totalRecords = gameRecords.filter(
+            (gameRecord) =>
+              gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
+              gameRecord.hands[1].startsWith(cardValues[columnIndex]),
+          );
+        }
+        return totalRecords;
+      }),
+    );
+  }, [gameRecords]);
 
   return (
     <div>
@@ -46,38 +76,15 @@ export default function IndexPage() {
         </Upload>
       )}
       <div>
-        胜/弃/负：
+        胜率表：
         <PokerMatrics
           cell={cardValues.map((rowCard, rowIndex) =>
             cardValues.map((columnCard, columnIndex) => {
-              let totalRecords: IGameRecord[] = [];
-              let winRecords: IGameRecord[] = [];
-              let passRecords: IGameRecord[] = [];
-              let loseRecords: IGameRecord[] = [];
-              if (rowIndex < columnIndex) {
-                totalRecords = gameRecords.filter(
-                  (gameRecord) =>
-                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
-                    gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
-                    gameRecord.hands[0][1] === gameRecord.hands[1][1],
-                );
-              } else if (rowIndex > columnIndex) {
-                totalRecords = gameRecords.filter(
-                  (gameRecord) =>
-                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
-                    gameRecord.hands[1].startsWith(cardValues[columnIndex]) &&
-                    gameRecord.hands[0][1] !== gameRecord.hands[1][1],
-                );
-              } else {
-                totalRecords = gameRecords.filter(
-                  (gameRecord) =>
-                    gameRecord.hands[0].startsWith(cardValues[rowIndex]) &&
-                    gameRecord.hands[1].startsWith(cardValues[columnIndex]),
-                );
-              }
-              winRecords = totalRecords.filter((record) => record.win);
-              passRecords = totalRecords.filter((record) => record.pass);
-              loseRecords = totalRecords.filter((record) => record.lose);
+              const totalRecords =
+                specifyHandsGameRecords[rowIndex][columnIndex];
+              const winRecords = totalRecords.filter((record) => record.win);
+              const passRecords = totalRecords.filter((record) => record.pass);
+              const loseRecords = totalRecords.filter((record) => record.lose);
 
               return (
                 <Popover
@@ -107,9 +114,18 @@ export default function IndexPage() {
                 >
                   <div>
                     <WinPassLoseIndicator
-                      winPercentage={winRecords.length / totalRecords.length}
-                      passPercentage={passRecords.length / totalRecords.length}
-                      losePercentage={loseRecords.length / totalRecords.length}
+                      winPercentage={
+                        winRecords.length /
+                        specifyHandsGameRecords[rowIndex][columnIndex].length
+                      }
+                      passPercentage={
+                        passRecords.length /
+                        specifyHandsGameRecords[rowIndex][columnIndex].length
+                      }
+                      losePercentage={
+                        loseRecords.length /
+                        specifyHandsGameRecords[rowIndex][columnIndex].length
+                      }
                     />
                   </div>
                 </Popover>
@@ -118,6 +134,56 @@ export default function IndexPage() {
           )}
         />
       </div>
+      每手盈利表(BB)：
+      <PokerMatrics
+        cell={cardValues.map((rowCard, rowIndex) =>
+          cardValues.map((columnCard, columnIndex) => {
+            const totalRecords = specifyHandsGameRecords[rowIndex][columnIndex];
+            const profitPerHand =
+              totalRecords
+                .map((record) => record.winBigBlinds)
+                .reduce((pre, record) => pre + record, 0) / totalRecords.length;
+
+            let fontStyle: {
+              color: string;
+              fontWeight?: string;
+            } = {
+              color: '#bfbfbf',
+            };
+            if (profitPerHand > 0.1 && profitPerHand < 5) {
+              fontStyle = {
+                color: '#ff7875',
+              };
+            } else if (profitPerHand > 5) {
+              fontStyle = {
+                color: '#f5222d',
+                fontWeight: 'bold',
+              };
+            } else if (profitPerHand < -0.1 && profitPerHand >= -5) {
+              fontStyle = {
+                color: '#73d13d',
+              };
+            } else if (profitPerHand < -5) {
+              fontStyle = {
+                color: '#52c41a',
+                fontWeight: 'bold',
+              };
+            }
+
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  ...fontStyle,
+                }}
+              >
+                {numberFormatter.format(profitPerHand)}
+              </div>
+            );
+          }),
+        )}
+      />
     </div>
   );
 }

@@ -26,9 +26,10 @@ export const PokerMatrics: React.FC<{ cell: Array<Array<ReactElement>> }> = ({
           {cardValues.map((columnValue, columnIndex) => (
             <div
               style={{
-                width: 50,
-                height: 50,
+                width: 40,
+                height: 40,
                 border: '1px solid black',
+                position: 'relative',
               }}
             >
               <div style={{ position: 'absolute' }}>

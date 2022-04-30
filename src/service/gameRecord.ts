@@ -35,26 +35,48 @@ export const convertTextToGameRecord: (textRecord: string) => IGameRecord = (
   const heroResult = lines
     .slice(summaryIndex + 1)
     .find((line) => line.includes(heroName));
+  if (!heroResult) {
+    throw new Error();
+  }
   const hands: [string, string] = [
     extractHand(lines[dealingIndex + 1]),
     extractHand(lines[dealingIndex + 2]),
   ];
-  const win = heroResult?.includes('net ') ?? false;
-  const lose = heroResult?.includes('lost') ?? false;
-  const pass = heroResult?.includes("didn't bet") ?? false;
+  const win = heroResult.includes('net ') ?? false;
+  const lose = heroResult.includes('lost') ?? false;
+  const pass = heroResult.includes("didn't bet") ?? false;
+
+  const bigBlindChips = Number(
+    lines[0].split(' - ')[2].match(/^(\d*)\/(\d*) /)?.[2],
+  );
+  let winBigBlinds = 0;
+  if (win) {
+    const reg = heroResult.match(/, net ([+\-,\d]+) \(/)?.[1];
+    if (!reg) {
+      console.error('heroResult', heroResult, reg);
+      throw new Error();
+    }
+    winBigBlinds = Number(reg.replace(',', '')) / bigBlindChips;
+  } else if (lose) {
+    const reg = heroResult.match(/lost ([,\d]+) \(/)?.[1];
+    if (!reg) {
+      console.error('heroResult', heroResult, reg);
+      throw new Error();
+    }
+    winBigBlinds = -Number(reg.replace(',', '')) / bigBlindChips;
+  }
+
   return {
     textRecord,
     id: lines[0].split(' - ')[0],
     type: lines[0].split(' - ')[1],
     description: lines[0].split(' - ')[2],
-    bigBlindChips: Number(
-      lines[0].split(' - ')[2].match(/^(\d*)\/(\d*) /)?.[2],
-    ),
+    bigBlindChips,
     timestamp: new Date(lines[0].split(' - ')[3]),
     hands,
     win,
     lose,
     pass,
-    winBigBlinds: 0,
+    winBigBlinds,
   };
 };
